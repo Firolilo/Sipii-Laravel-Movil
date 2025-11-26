@@ -5,8 +5,8 @@ import '../models/biomasa.dart';
 import '../models/tipo_biomasa.dart';
 
 class ApiService {
-  // TODO: Cambiar esta URL por la de tu servidor Laravel
-  static const String baseUrl = 'http://192.168.0.27:8000/api';
+  // URL de la API separada (puerto 8001)
+  static const String baseUrl = 'http://192.168.0.27:8001/api';
   
   // Headers por defecto
   static Map<String, String> get headers => {
