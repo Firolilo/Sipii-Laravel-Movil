@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'tipo_biomasa.dart';
 
 class Biomasa {
   final int id;
@@ -11,6 +12,11 @@ class Biomasa {
   final DateTime fechaReporte;
   final String? tipoBiomasaNombre;
   final String? tipoBiomasaColor;
+  final TipoBiomasa? tipoBiomasa;
+  final String? estado; // 'pendiente', 'aprobada', 'rechazada'
+  final String? motivoRechazo;
+  final int? aprobadaPor;
+  final String? fechaRevision;
 
   Biomasa({
     required this.id,
@@ -23,6 +29,11 @@ class Biomasa {
     required this.fechaReporte,
     this.tipoBiomasaNombre,
     this.tipoBiomasaColor,
+    this.tipoBiomasa,
+    this.estado,
+    this.motivoRechazo,
+    this.aprobadaPor,
+    this.fechaRevision,
   });
 
   factory Biomasa.fromJson(Map<String, dynamic> json) {
@@ -36,7 +47,7 @@ class Biomasa {
       try {
         var parsed = jsonDecode(coordenadasData);
         if (parsed is List) {
-          coords = (parsed as List).map((coord) {
+          coords = parsed.map((coord) {
             if (coord is List) {
               return List<double>.from(coord.map((e) => e is num ? e.toDouble() : 0.0));
             }
@@ -49,7 +60,7 @@ class Biomasa {
     } 
     // Si viene como array directamente
     else if (coordenadasData is List) {
-      coords = (coordenadasData as List).map((coord) {
+      coords = coordenadasData.map((coord) {
         if (coord is List) {
           return List<double>.from(coord.map((e) => e is num ? e.toDouble() : 0.0));
         }
@@ -70,6 +81,13 @@ class Biomasa {
       ),
       tipoBiomasaNombre: json['tipo_biomasa']?['tipo_biomasa'],
       tipoBiomasaColor: json['tipo_biomasa']?['color'],
+      tipoBiomasa: json['tipo_biomasa'] != null 
+          ? TipoBiomasa.fromJson(json['tipo_biomasa']) 
+          : null,
+      estado: json['estado'],
+      motivoRechazo: json['motivo_rechazo'],
+      aprobadaPor: json['aprobada_por'],
+      fechaRevision: json['fecha_revision'],
     );
   }
 

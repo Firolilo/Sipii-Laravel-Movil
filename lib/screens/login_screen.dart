@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,16 +29,49 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    // TODO: Implementar lógica de login real con ApiService
-    // Por ahora solo simulamos un delay y navegamos al mapa
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      // Llamar al API de login
+      final result = await ApiService.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    // Navegar a la pantalla del mapa
-    Navigator.pushReplacementNamed(context, '/map');
+      if (result['success'] == true) {
+        // Login exitoso
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('¡Bienvenido ${result['data']['user']['name']}!'),
+            backgroundColor: Colors.green,
+          ),
+        );
 
-    setState(() => _isLoading = false);
+        // Navegar al dashboard
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        // Error en login
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Error al iniciar sesión'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error de conexión: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -208,6 +242,32 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: Colors.grey.shade700,
                                 ),
                               ),
+                            ),
+                            const SizedBox(height: 8),
+                            
+                            // Link a registro
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '¿No tienes cuenta? ',
+                                  style: TextStyle(color: Colors.grey.shade700),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pushNamed(context, '/register');
+                                  },
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.orange.shade700,
+                                  ),
+                                  child: const Text(
+                                    'Regístrate',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

@@ -20,9 +20,9 @@ class _MapScreenState extends State<MapScreen> {
   bool _isLoading = true;
   String? _error;
 
-  // Coordenadas iniciales (Santa Cruz, Bolivia)
-  final LatLng _initialCenter = const LatLng(-17.8146, -63.1561);
-  final double _initialZoom = 10.0;
+  // Coordenadas iniciales (San José de Chiquitos, Bolivia)
+  final LatLng _initialCenter = const LatLng(-17.7486, -60.7464);
+  final double _initialZoom = 12.0;
 
   @override
   void initState() {
