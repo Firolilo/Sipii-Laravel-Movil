@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/pdf_service.dart';
 
 class PredictionsListScreen extends StatefulWidget {
   const PredictionsListScreen({super.key});
@@ -183,6 +184,17 @@ class _PredictionsListScreenState extends State<PredictionsListScreen> {
                   ],
                 ],
               ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => _generatePdf(prediction),
+                    icon: const Icon(Icons.picture_as_pdf, size: 16),
+                    label: const Text('PDF'),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -207,5 +219,34 @@ class _PredictionsListScreenState extends State<PredictionsListScreen> {
       label: Text(label, style: const TextStyle(fontSize: 12)),
       visualDensity: VisualDensity.compact,
     );
+  }
+
+  Future<void> _generatePdf(Map<String, dynamic> prediction) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Descargando PDF...')),
+      );
+
+      final predictionId = prediction['id'];
+      await PdfService.downloadPredictionPdfFromServer(predictionId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('PDF descargado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al descargar PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

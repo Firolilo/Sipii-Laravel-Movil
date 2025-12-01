@@ -10,7 +10,6 @@ class PredictionsManagementScreen extends StatefulWidget {
 
 class _PredictionsManagementScreenState extends State<PredictionsManagementScreen> {
   List<dynamic> _predictions = [];
-  List<dynamic> _focos = [];
   bool _isLoading = true;
 
   @override
@@ -23,14 +22,10 @@ class _PredictionsManagementScreenState extends State<PredictionsManagementScree
     setState(() => _isLoading = true);
 
     try {
-      final results = await Future.wait([
-        ApiService.getPredictions(),
-        ApiService.getFocosIncendio(),
-      ]);
+      final predictions = await ApiService.getPredictions();
 
       setState(() {
-        _predictions = results[0] as List;
-        _focos = results[1] as List;
+        _predictions = predictions;
         _isLoading = false;
       });
     } catch (e) {
@@ -38,163 +33,6 @@ class _PredictionsManagementScreenState extends State<PredictionsManagementScree
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al cargar datos: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _showCreatePredictionDialog() async {
-    int? selectedFocoId;
-    final temperatureController = TextEditingController(text: '25');
-    final humidityController = TextEditingController(text: '60');
-    final windSpeedController = TextEditingController(text: '15');
-    final windDirectionController = TextEditingController(text: '180');
-    String terrainType = 'Bosque';
-    final predictionHoursController = TextEditingController(text: '24');
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Crear Nueva Predicción'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<int>(
-                decoration: const InputDecoration(
-                  labelText: 'Foco de Incendio',
-                  border: OutlineInputBorder(),
-                ),
-                items: _focos.map((foco) {
-                  return DropdownMenuItem<int>(
-                    value: foco['id'],
-                    child: Text(foco['ubicacion'] ?? 'Foco #${foco['id']}'),
-                  );
-                }).toList(),
-                onChanged: (value) => selectedFocoId = value,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: temperatureController,
-                decoration: const InputDecoration(
-                  labelText: 'Temperatura (°C)',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: humidityController,
-                decoration: const InputDecoration(
-                  labelText: 'Humedad (%)',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: windSpeedController,
-                decoration: const InputDecoration(
-                  labelText: 'Velocidad del viento (km/h)',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: windDirectionController,
-                decoration: const InputDecoration(
-                  labelText: 'Dirección del viento (°)',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Tipo de terreno',
-                  border: OutlineInputBorder(),
-                ),
-                value: terrainType,
-                items: ['Bosque', 'Pastizal', 'Matorral', 'Mixto'].map((type) {
-                  return DropdownMenuItem<String>(
-                    value: type,
-                    child: Text(type),
-                  );
-                }).toList(),
-                onChanged: (value) => terrainType = value ?? 'Bosque',
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: predictionHoursController,
-                decoration: const InputDecoration(
-                  labelText: 'Horas de predicción',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (selectedFocoId == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Debes seleccionar un foco')),
-                );
-                return;
-              }
-              Navigator.pop(context, true);
-            },
-            child: const Text('Crear'),
-          ),
-        ],
-      ),
-    );
-
-    if (result != true || selectedFocoId == null) return;
-
-    try {
-      final createResult = await ApiService.createPrediction(
-        focoIncendioId: selectedFocoId!,
-        temperature: double.parse(temperatureController.text),
-        humidity: double.parse(humidityController.text),
-        windSpeed: double.parse(windSpeedController.text),
-        windDirection: double.parse(windDirectionController.text),
-        terrainType: terrainType,
-        predictionHours: int.parse(predictionHoursController.text),
-      );
-
-      if (mounted) {
-        if (createResult['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Predicción creada exitosamente'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          _loadData();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(createResult['message'] ?? 'Error al crear predicción'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
         );
       }
     }
@@ -285,11 +123,6 @@ class _PredictionsManagementScreenState extends State<PredictionsManagementScree
                     },
                   ),
                 ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreatePredictionDialog,
-        icon: const Icon(Icons.add),
-        label: const Text('Nueva Predicción'),
-      ),
     );
   }
 
@@ -312,10 +145,12 @@ class _PredictionsManagementScreenState extends State<PredictionsManagementScree
             ),
           ),
           const SizedBox(height: 8),
-          ElevatedButton.icon(
-            onPressed: _showCreatePredictionDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Crear Primera Predicción'),
+          Text(
+            'Las predicciones son generadas automáticamente',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[500],
+            ),
           ),
         ],
       ),

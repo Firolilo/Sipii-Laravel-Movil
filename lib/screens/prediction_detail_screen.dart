@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../services/api_service.dart';
+import '../services/pdf_service.dart';
 
 class PredictionDetailScreen extends StatefulWidget {
   const PredictionDetailScreen({super.key});
@@ -52,6 +53,20 @@ class _PredictionDetailScreenState extends State<PredictionDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalle de Predicción'),
+        actions: [
+          if (_prediction != null)
+            IconButton(
+              icon: const Icon(Icons.share),
+              tooltip: 'Compartir PDF',
+              onPressed: () => _generatePdf(),
+            ),
+          if (_prediction != null)
+            IconButton(
+              icon: const Icon(Icons.print),
+              tooltip: 'Imprimir',
+              onPressed: () => _printPdf(),
+            ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -470,5 +485,54 @@ class _PredictionDetailScreenState extends State<PredictionDetailScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _generatePdf() async {
+    if (_prediction == null) return;
+
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Descargando PDF...')),
+      );
+
+      // Usar el PDF del servidor
+      final predictionId = _prediction!['id'];
+      await PdfService.downloadPredictionPdfFromServer(predictionId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('PDF descargado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al descargar PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _printPdf() async {
+    if (_prediction == null) return;
+
+    try {
+      await PdfService.printPredictionPdf(_prediction!);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al imprimir: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

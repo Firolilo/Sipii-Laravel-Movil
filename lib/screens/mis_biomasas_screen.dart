@@ -23,7 +23,7 @@ class _MisBiomasasScreenState extends State<MisBiomasasScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final biomasas = await ApiService.getBiomasas();
+      final biomasas = await ApiService.getMisBiomasas();
       setState(() {
         _biomasas = biomasas;
         _isLoading = false;

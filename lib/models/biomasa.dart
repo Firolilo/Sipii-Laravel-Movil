@@ -38,6 +38,7 @@ class Biomasa {
 
   factory Biomasa.fromJson(Map<String, dynamic> json) {
     // Parse coordenadas (puede venir como string JSON o como array)
+    // Las coordenadas ya vienen como [lat, lng] desde la API
     List<List<double>> coords = [];
     
     var coordenadasData = json['coordenadas'];
@@ -48,8 +49,11 @@ class Biomasa {
         var parsed = jsonDecode(coordenadasData);
         if (parsed is List) {
           coords = parsed.map((coord) {
-            if (coord is List) {
-              return List<double>.from(coord.map((e) => e is num ? e.toDouble() : 0.0));
+            if (coord is List && coord.length >= 2) {
+              // Las coordenadas ya vienen como [lat, lng]
+              double lat = (coord[0] is num) ? coord[0].toDouble() : 0.0;
+              double lng = (coord[1] is num) ? coord[1].toDouble() : 0.0;
+              return [lat, lng];
             }
             return <double>[];
           }).toList();
@@ -61,8 +65,11 @@ class Biomasa {
     // Si viene como array directamente
     else if (coordenadasData is List) {
       coords = coordenadasData.map((coord) {
-        if (coord is List) {
-          return List<double>.from(coord.map((e) => e is num ? e.toDouble() : 0.0));
+        if (coord is List && coord.length >= 2) {
+          // Las coordenadas ya vienen como [lat, lng]
+          double lat = (coord[0] is num) ? coord[0].toDouble() : 0.0;
+          double lng = (coord[1] is num) ? coord[1].toDouble() : 0.0;
+          return [lat, lng];
         }
         return <double>[];
       }).toList();

@@ -8,7 +8,7 @@ import '../models/tipo_biomasa.dart';
 class ApiService {
   // URL de la API unificada (puerto 8000)
   // TODO: Cambiar por tu IP local. Ejecuta 'ipconfig' en Windows para obtenerla
-  static const String baseUrl = 'http://192.168.0.4:8000/api';
+  static const String baseUrl = 'http://10.26.14.107:8000/api';
   
   // Headers por defecto (sin autenticación)
   static Map<String, String> get headers => {
@@ -115,13 +115,50 @@ class ApiService {
     }
   }
 
-  /// Obtener todas las biomasas (endpoint público)
-  /// Endpoint: GET /api/public/biomasas - Devuelve TODAS las biomasas (sin autenticación)
+  /// Obtener MIS biomasas (autenticado)
+  /// Endpoint: GET /api/biomasas - Devuelve solo las biomasas del usuario autenticado
+  static Future<List<Biomasa>> getMisBiomasas() async {
+    try {
+      final authHeadersMap = await authHeaders;
+      final response = await http.get(
+        Uri.parse('$baseUrl/biomasas'),
+        headers: authHeadersMap,
+      );
+
+      print('DEBUG getMisBiomasas: Status ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        
+        List<dynamic> biomasasJson;
+        if (data is Map && data.containsKey('data')) {
+          biomasasJson = data['data'];
+        } else if (data is List) {
+          biomasasJson = data;
+        } else {
+          return [];
+        }
+
+        print('DEBUG getMisBiomasas: ${biomasasJson.length} biomasas encontradas');
+        
+        return biomasasJson.map((json) => Biomasa.fromJson(json)).toList();
+      } else {
+        throw Exception('Error al cargar mis biomasas: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error en getMisBiomasas: $e');
+      return [];
+    }
+  }
+
+  /// Obtener todas las biomasas (endpoint público o admin)
+  /// Endpoint: GET /api/public/biomasas - Devuelve TODAS las biomasas
   static Future<List<Biomasa>> getBiomasas() async {
     try {
+      final authHeadersMap = await authHeaders;
       final response = await http.get(
         Uri.parse('$baseUrl/public/biomasas'),
-        headers: headers,
+        headers: authHeadersMap,
       );
 
       print('DEBUG getBiomasas: Status ${response.statusCode}');
@@ -888,5 +925,15 @@ class ApiService {
       print('Error en getFirmsData: $e');
       return [];
     }
+  }
+
+  /// Obtener URL para descargar PDF de predicción
+  static String getPredictionPdfUrl(int predictionId) {
+    return '$baseUrl/public/predictions/$predictionId/pdf';
+  }
+
+  /// Obtener URL para descargar PDF de simulación
+  static String getSimulationPdfUrl(int simulationId) {
+    return '$baseUrl/public/simulaciones/$simulationId/pdf';
   }
 }

@@ -294,7 +294,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildMap() {
     return SizedBox(
-      height: 400,
+      height: 600,
       child: Card(
         margin: const EdgeInsets.all(16),
         clipBehavior: Clip.antiAlias,
@@ -329,34 +329,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               }).whereType<Marker>().toList(),
             ),
-            // Polígonos de biomasas
-            PolylineLayer(
-              polylines: _biomasas.map((biomasa) {
+            // Polígonos de biomasas aprobadas
+            PolygonLayer(
+              polygons: _biomasas.where((b) => b.estado == 'aprobada').map((biomasa) {
                 try {
                   final coords = biomasa.coordenadas;
                   if (coords.isEmpty) return null;
 
                   final points = coords.map((coord) {
                     if (coord.length >= 2) {
-                      return LatLng(
-                        (coord[0] as num).toDouble(),
-                        (coord[1] as num).toDouble(),
-                      );
+                      final lat = (coord[0] as num).toDouble();
+                      final lng = (coord[1] as num).toDouble();
+                      return LatLng(lat, lng);
                     }
                     return null;
                   }).whereType<LatLng>().toList();
 
                   if (points.isEmpty) return null;
 
-                  return Polyline(
+                  // Obtener color del tipo de biomasa o usar verde por defecto
+                  Color biomasaColor = Colors.green;
+                  if (biomasa.tipoBiomasa?.color != null) {
+                    try {
+                      final colorStr = biomasa.tipoBiomasa!.color!;
+                      // Si el color viene en formato hex #RRGGBB
+                      if (colorStr.startsWith('#')) {
+                        biomasaColor = Color(int.parse(colorStr.substring(1), radix: 16) + 0xFF000000);
+                      }
+                    } catch (e) {
+                      biomasaColor = Colors.green;
+                    }
+                  } else if (biomasa.tipoBiomasaColor != null) {
+                    try {
+                      final colorStr = biomasa.tipoBiomasaColor!;
+                      if (colorStr.startsWith('#')) {
+                        biomasaColor = Color(int.parse(colorStr.substring(1), radix: 16) + 0xFF000000);
+                      }
+                    } catch (e) {
+                      biomasaColor = Colors.green;
+                    }
+                  }
+
+                  return Polygon(
                     points: points,
-                    strokeWidth: 3,
-                    color: Colors.green.withOpacity(0.7),
+                    color: biomasaColor.withOpacity(0.3),
+                    borderStrokeWidth: 2,
+                    borderColor: biomasaColor,
+                    isFilled: true,
                   );
                 } catch (e) {
+                  print('Error creando polígono: $e');
                   return null;
                 }
-              }).whereType<Polyline>().toList(),
+              }).whereType<Polygon>().toList(),
             ),
           ],
         ),
