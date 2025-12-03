@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/biomasa.dart';
 
-class MisBiomasasScreen extends StatefulWidget {
-  const MisBiomasasScreen({super.key});
+class BiomasasScreen extends StatefulWidget {
+  const BiomasasScreen({super.key});
 
   @override
-  State<MisBiomasasScreen> createState() => _MisBiomasasScreenState();
+  State<BiomasasScreen> createState() => _BiomasasScreenState();
 }
 
-class _MisBiomasasScreenState extends State<MisBiomasasScreen> {
+class _BiomasasScreenState extends State<BiomasasScreen> {
   List<Biomasa> _biomasas = [];
   bool _isLoading = true;
 
@@ -23,7 +23,9 @@ class _MisBiomasasScreenState extends State<MisBiomasasScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final biomasas = await ApiService.getMisBiomasas();
+      final allBiomasas = await ApiService.getBiomasas();
+      // Filtrar solo las aprobadas
+      final biomasas = allBiomasas.where((b) => b.estado == 'aprobada').toList();
       setState(() {
         _biomasas = biomasas;
         _isLoading = false;
@@ -42,7 +44,7 @@ class _MisBiomasasScreenState extends State<MisBiomasasScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis Biomasas'),
+        title: const Text('Biomasas'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -88,7 +90,7 @@ class _MisBiomasasScreenState extends State<MisBiomasasScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No hay biomasas reportadas',
+            'No hay biomasas aprobadas',
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey[600],
@@ -96,7 +98,7 @@ class _MisBiomasasScreenState extends State<MisBiomasasScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Toca el botón + para crear un reporte',
+            'Las biomasas aparecerán aquí cuando sean aprobadas',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[500],
@@ -108,184 +110,73 @@ class _MisBiomasasScreenState extends State<MisBiomasasScreen> {
   }
 
   Widget _buildBiomasaCard(Biomasa biomasa) {
-    final status = biomasa.estado ?? 'pendiente';
-    final statusColor = _getStatusColor(status);
-    final statusIcon = _getStatusIcon(status);
-    final statusText = _getStatusText(status);
+    // Obtener color del tipo de biomasa
+    Color tipoColor = Colors.green;
+    if (biomasa.tipoBiomasaColor != null) {
+      try {
+        final hex = biomasa.tipoBiomasaColor!.replaceAll('#', '');
+        tipoColor = Color(int.parse('FF$hex', radix: 16));
+      } catch (_) {}
+    }
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        children: [
-          ListTile(
-            leading: Icon(Icons.nature, color: Colors.green, size: 40),
-            title: Text(
-              biomasa.tipoBiomasa?.nombre ?? biomasa.tipoBiomasaNombre ?? 'Sin tipo',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      child: ListTile(
+        leading: Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: tipoColor.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: tipoColor, width: 2),
+          ),
+          child: Icon(Icons.nature, color: tipoColor, size: 28),
+        ),
+        title: Text(
+          biomasa.tipoBiomasa?.nombre ?? biomasa.tipoBiomasaNombre ?? 'Sin tipo',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Row(
               children: [
-                const SizedBox(height: 4),
+                Icon(Icons.grass, size: 14, color: Colors.grey[600]),
+                const SizedBox(width: 4),
                 Text('Densidad: ${biomasa.densidad}'),
-                Text('Área: ${biomasa.areaM2.toStringAsFixed(2)} m²'),
-                if (biomasa.descripcion != null && biomasa.descripcion!.isNotEmpty)
-                  Text(
-                    biomasa.descripcion!,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
               ],
             ),
-            trailing: Chip(
-              avatar: Icon(statusIcon, size: 16, color: Colors.white),
-              label: Text(
-                statusText,
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-              backgroundColor: statusColor,
-            ),
-          ),
-          if (status == 'rechazada' && biomasa.motivoRechazo != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              color: Colors.red[50],
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline, color: Colors.red, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Motivo: ${biomasa.motivoRechazo}',
-                      style: const TextStyle(color: Colors.red, fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          if (status == 'aprobada' && biomasa.aprobadaPor != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(8),
-              color: Colors.green[50],
-              child: Text(
-                'Aprobada por: Admin • ${biomasa.fechaRevision ?? ''}',
-                style: TextStyle(color: Colors.green[800], fontSize: 12),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          if (status == 'pendiente')
-            ButtonBar(
+            Row(
               children: [
-                TextButton.icon(
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Editar'),
-                  onPressed: () => _editBiomasa(biomasa),
-                ),
-                TextButton.icon(
-                  icon: const Icon(Icons.delete),
-                  label: const Text('Eliminar'),
-                  style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  onPressed: () => _deleteBiomasa(biomasa),
-                ),
+                Icon(Icons.square_foot, size: 14, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text('Área: ${_formatArea(biomasa.areaM2)}'),
               ],
             ),
-        ],
+            if (biomasa.descripcion != null && biomasa.descripcion!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  biomasa.descripcion!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+        trailing: const Icon(Icons.check_circle, color: Colors.green),
+        isThreeLine: true,
       ),
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'aprobada':
-        return Colors.green;
-      case 'rechazada':
-        return Colors.red;
-      case 'pendiente':
-      default:
-        return Colors.orange;
+  String _formatArea(double area) {
+    if (area >= 10000) {
+      return '${(area / 10000).toStringAsFixed(2)} ha';
     }
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case 'aprobada':
-        return Icons.check_circle;
-      case 'rechazada':
-        return Icons.cancel;
-      case 'pendiente':
-      default:
-        return Icons.schedule;
-    }
-  }
-
-  String _getStatusText(String status) {
-    switch (status) {
-      case 'aprobada':
-        return 'Aprobada';
-      case 'rechazada':
-        return 'Rechazada';
-      case 'pendiente':
-      default:
-        return 'Pendiente';
-    }
-  }
-
-  Future<void> _editBiomasa(Biomasa biomasa) async {
-    final result = await Navigator.pushNamed(
-      context,
-      '/biomasa-form',
-      arguments: biomasa,
-    );
-    if (result == true) {
-      _loadBiomasas();
-    }
-  }
-
-  Future<void> _deleteBiomasa(Biomasa biomasa) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar Biomasa'),
-        content: const Text('¿Estás seguro de que deseas eliminar este reporte?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    try {
-      final result = await ApiService.deleteBiomasa(biomasa.id);
-      
-      if (mounted) {
-        if (result['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Biomasa eliminada exitosamente')),
-          );
-          _loadBiomasas();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(result['message'] ?? 'Error al eliminar')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
-    }
+    return '${area.toStringAsFixed(0)} m²';
   }
 }

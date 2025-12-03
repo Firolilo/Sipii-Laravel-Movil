@@ -3,7 +3,7 @@ import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/dashboard_screen.dart';
-import 'screens/mis_biomasas_screen.dart';
+import 'screens/mis_biomasas_screen.dart' show BiomasasScreen;
 import 'screens/biomasa_form_screen.dart';
 import 'screens/predictions_list_screen.dart';
 import 'screens/prediction_detail_screen.dart';
@@ -53,7 +53,7 @@ class SipiiApp extends StatelessWidget {
         '/register': (context) => const RegisterScreen(),
         '/map': (context) => const MapScreen(),
         '/dashboard': (context) => const DashboardScreen(),
-        '/mis-biomasas': (context) => const MisBiomasasScreen(),
+        '/biomasas': (context) => const BiomasasScreen(),
         '/biomasa-form': (context) => const BiomasaFormScreen(),
         '/predictions': (context) => const PredictionsListScreen(),
         '/prediction-detail': (context) => const PredictionDetailScreen(),

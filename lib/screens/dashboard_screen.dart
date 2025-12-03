@@ -123,10 +123,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.nature),
-            title: const Text('Mis Biomasas'),
+            title: const Text('Biomasas'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/mis-biomasas');
+              Navigator.pushNamed(context, '/biomasas');
             },
           ),
           ListTile(
