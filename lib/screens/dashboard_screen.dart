@@ -428,6 +428,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Cerrar Sesión'),
           ),
         ],
@@ -435,9 +436,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
 
     if (confirm == true && mounted) {
-      await ApiService.logout();
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
+      // Mostrar indicador de carga
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      try {
+        await ApiService.logout();
+        
+        if (mounted) {
+          // Cerrar el diálogo de carga
+          Navigator.of(context).pop();
+          
+          // Navegar al login y limpiar el stack de navegación
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/',
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.of(context).pop(); // Cerrar diálogo de carga
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al cerrar sesión: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }

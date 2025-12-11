@@ -8,7 +8,7 @@ import '../models/tipo_biomasa.dart';
 class ApiService {
   // URL de la API unificada (puerto 8000)
   // TODO: Cambiar por tu IP local. Ejecuta 'ipconfig' en Windows para obtenerla
-  static const String baseUrl = 'http://10.26.14.107:8000/api';
+  static const String baseUrl = 'http://10.26.13.214:8000/api';
   
   // Headers por defecto (sin autenticación)
   static Map<String, String> get headers => {
