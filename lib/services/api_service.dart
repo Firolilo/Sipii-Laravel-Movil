@@ -6,9 +6,9 @@ import '../models/biomasa.dart';
 import '../models/tipo_biomasa.dart';
 
 class ApiService {
-  // URL de la API unificada (puerto 8000)
-  // TODO: Cambiar por tu IP local. Ejecuta 'ipconfig' en Windows para obtenerla
-  static const String baseUrl = 'http://10.26.13.214:8000/api';
+  // URL de la API unificada (actualizada al servidor desplegado)
+  // Cambiada para apuntar a la instancia pública: http://sipi.dasalas.shop
+  static const String baseUrl = 'http://sipi.dasalas.shop/api';
   
   // Headers por defecto (sin autenticación)
   static Map<String, String> get headers => {
